@@ -4,15 +4,112 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <meta charset="utf-8">
-    <title>TTT</title>
+    <title>Platformer</title>
     <style>
-    
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      canvas#gamefield {
+        margin: 0 auto 0 auto;
+      }
     </style>
   </head>
   <body>
+    <canvas id="gamefield"></canvas>
+    
     <script>
       $(function(){
         var socket = io();
+        var canvas = document.getElementById('gamefield');
+        //canvas.width = window.innerHeight;
+        //canvas.height = window.innerHeight;
+        canvas.width = 600;
+        canvas.height = 600;
+        var ctx = canvas.getContext("2d");
+        var size = canvas.height;
+        var lobby, color, name, x, y;
+        var speed = 1, pW = 20, pH = 40;
+        var toDraw = [];
+        
+        
+        socket.on('connect', function(){
+          name = prompt('Please Enter a Username');
+          socket.emit('newconnection', name);
+        });
+        
+        socket.on('setup', function(c){
+          color = c;
+          x = (canvas.width/2)-(pW/2);
+          y = ((canvas.height/15) * 14)-(pH/2);
+          lobby = setInterval(lobbySequence, 15);
+        });
+        
+        socket.on('newMove', function(n, c, x, y){
+          toDraw.push({name:n, color:c, x:x, y:y});
+        });
+        
+        function lobbySequence(){
+          movement('lobby');
+          draw();
+        }
+        
+        function draw(){
+          ctx.beginPath();
+          ctx.fillStyle('ffffff');
+          ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.closePath();
+          ctx.fill();
+          for (var i = 0; i < toDraw.length; i++){
+            ctx.beginPath();
+            ctx.fillStyle('#000');
+            ctx.fillRect(toDraw.x,toDraw.y,pW,pH);
+            ctx.closePath();
+            ctx.fill();
+          }
+          toDraw = [];
+        }
+        
+        function move(key){
+          if (key == "UP"){
+            
+          }
+          if (key == "RIGHT"){
+            x += speed;
+          }
+          if (key == "DOWN"){
+            
+          }
+          if (key == "LEFT"){
+            x -= speed;
+          }
+        }
+        
+        function movement(room){
+          socket.emit('move', room, name, color, x, y);
+        }
+        
+        window.addEventListener("keydown", keyHandler, false);
+        function keyHandler(key) {
+          switch (key.keyCode) {
+            case 38:
+              move("UP");
+              break;
+            case 39:
+              move("RIGHT");
+              break;
+            case 40:
+              move("DOWN");
+              break;
+            case 37:
+              move("LEFT");
+              break;
+            case 192:
+              socket.emit('forcereset');
+              break;
+          }
+        }
+        
       });
     </script>
   </body>
