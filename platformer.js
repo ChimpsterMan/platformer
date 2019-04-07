@@ -2,8 +2,9 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 2000;
-var colors = ['#800000' , '#808000' , '#008000' , '#000080' , '#800080'],
-    users = [], online = 0;
+var colors = ['#800000', '#808000', '#008000', '#000080', '#800080'],
+    users = [], online = 0, colorChoice = 0;
+
 app.get('/', function(req, res) {
   res.sendFile(__dirname + '/index.html');
 });
@@ -14,11 +15,12 @@ io.on('connection', function(socket){
       
     } else {
       console.log(username + ' has connected');
+      online += 1;
+      colorChoice += 1;
       socket.username = username;
       users.push(username);
-      socket.emit('setup', colors[online]);
+      socket.emit('setup', colors[(colorChoice-1)%colors.length]);
       socket.join('lobby');
-      online += 1;
       io.sockets.emit('updateOnline', online);
     }
   });

@@ -10,10 +10,14 @@
       margin: 0;
       padding: 0;
       }
+      body{
+        overflow:hidden;
+      }
       #field {
       text-align:center;
       }
-      #gamefield {
+      #game {
+        border: 2px solid black;
       }
     </style>
   </head>
@@ -22,16 +26,19 @@
     <div id="field">
       <canvas id="game"></canvas>
     </div>
+    
+    <div style="display:none">
+      <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png">
+    </div>
     <script>
       $(function(){
         var socket = io();
         var canvas = document.getElementById('game');
-        //canvas.width = window.innerHeight;
-        //canvas.height = window.innerHeight;
-        canvas.width = 600;
-        canvas.height = 600;
+        var background = document.getElementById('BG');
+        canvas.height = window.innerHeight;
+        canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
-        var size = canvas.height;
+        var standardH = 605, standardW = 806;
         var lobby, color, name, x, y;
         var speed = 2, pW = 40, pH = 80;
         var toDraw = [];
@@ -44,8 +51,8 @@
         
         socket.on('setup', function(c){
           color = c;
-          x = (canvas.width/2)-(pW/2);
-          y = ((canvas.height/15) * 14)-(pH/2);
+          x = (standardW/2)-(pW/2);
+          y = ((standardH/15) * 13)-(pH/2);
           lobby = setInterval(lobbySequence, 10);
         });
         
@@ -79,15 +86,16 @@
         
         function lobbySequence(){
           movement('lobby');
+          
           draw();
         }
         
         function draw(){
-          ctx.fillStyle = "#000080";
-          ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(background,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
-            ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
+            ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
+            //ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
           }
         }
         
@@ -133,6 +141,15 @@
           move("DOWN");
         } 
       }  
+        
+      //utilities
+      function scaleX(num){
+        return canvas.width/(standardW/num);
+      }
+        
+      function scaleY(num){
+        return canvas.height/(standardH/num);
+      }
         
       });
     </script>
