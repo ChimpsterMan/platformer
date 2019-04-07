@@ -7,21 +7,25 @@
     <title>Platformer</title>
     <style>
       * {
-        margin: 0;
-        padding: 0;
+      margin: 0;
+      padding: 0;
       }
-      canvas#gamefield {
-        margin: 0 auto 0 auto;
+      #field {
+      text-align:center;
+      }
+      #gamefield {
       }
     </style>
   </head>
   <body>
-    <canvas id="gamefield"></canvas>
-    
+    <h1 id="debug"></h1>
+    <div id="field">
+      <canvas id="game"></canvas>
+    </div>
     <script>
       $(function(){
         var socket = io();
-        var canvas = document.getElementById('gamefield');
+        var canvas = document.getElementById('game');
         //canvas.width = window.innerHeight;
         //canvas.height = window.innerHeight;
         canvas.width = 600;
@@ -29,7 +33,7 @@
         var ctx = canvas.getContext("2d");
         var size = canvas.height;
         var lobby, color, name, x, y;
-        var speed = 1, pW = 20, pH = 40;
+        var speed = 2, pW = 40, pH = 80;
         var toDraw = [];
         
         
@@ -42,11 +46,35 @@
           color = c;
           x = (canvas.width/2)-(pW/2);
           y = ((canvas.height/15) * 14)-(pH/2);
-          lobby = setInterval(lobbySequence, 15);
+          lobby = setInterval(lobbySequence, 10);
         });
         
-        socket.on('newMove', function(n, c, x, y){
-          toDraw.push({name:n, color:c, x:x, y:y});
+        socket.on('disconnection', function(user){
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == user){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw.splice(temp,1);
+          }
+        });
+        
+        socket.on('newMove', function(n, c, X, Y){
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == n){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw[temp] = {name:n, color:c, x:X, y:Y};
+          } else {
+            toDraw.push({name:n, color:c, x:X, y:Y});
+          }
         });
         
         function lobbySequence(){
@@ -55,19 +83,12 @@
         }
         
         function draw(){
-          ctx.beginPath();
-          ctx.fillStyle('ffffff');
+          ctx.fillStyle = "#000080";
           ctx.fillRect(0,0,canvas.width,canvas.height);
-          ctx.closePath();
-          ctx.fill();
           for (var i = 0; i < toDraw.length; i++){
-            ctx.beginPath();
-            ctx.fillStyle('#000');
-            ctx.fillRect(toDraw.x,toDraw.y,pW,pH);
-            ctx.closePath();
-            ctx.fill();
+            ctx.fillStyle = toDraw[i].color;
+            ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
           }
-          toDraw = [];
         }
         
         function move(key){
@@ -89,26 +110,29 @@
           socket.emit('move', room, name, color, x, y);
         }
         
-        window.addEventListener("keydown", keyHandler, false);
-        function keyHandler(key) {
-          switch (key.keyCode) {
-            case 38:
-              move("UP");
-              break;
-            case 39:
-              move("RIGHT");
-              break;
-            case 40:
-              move("DOWN");
-              break;
-            case 37:
-              move("LEFT");
-              break;
-            case 192:
-              socket.emit('forcereset');
-              break;
-          }
+      var keyState = {};  
+      setInterval(keyLoop, 10);
+      window.addEventListener('keydown',function(e){
+        keyState[e.keyCode || e.which] = true;
+      },true);    
+      window.addEventListener('keyup',function(e){
+        keyState[e.keyCode || e.which] = false;
+      },true);
+      
+      function keyLoop() {
+        if (keyState[37]){
+          move("LEFT");
+        } 
+        if (keyState[38]){
+          move("UP");
+        } 
+        if (keyState[39]){
+          move("RIGHT");
         }
+        if (keyState[40]){
+          move("DOWN");
+        } 
+      }  
         
       });
     </script>

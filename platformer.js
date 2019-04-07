@@ -10,7 +10,7 @@ app.get('/', function(req, res) {
 
 io.on('connection', function(socket){
   socket.on('newconnection', function(username){
-    if (username == null){
+    if (username == null || username == undefined){
       
     } else {
       console.log(username + ' has connected');
@@ -26,7 +26,7 @@ io.on('connection', function(socket){
   socket.on('disconnect', function(){
     console.log(socket.username + ' has disconnected');
     delete users[socket.username];
-    io.sockets.emit('disconnection', socket.username);
+    io.sockets.in('lobby').emit('disconnection', socket.username);
     
     online -= 1;
     io.sockets.emit('updateOnline', online);
