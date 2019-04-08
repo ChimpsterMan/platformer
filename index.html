@@ -39,9 +39,10 @@
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
         var standardH = 605, standardW = 806;
-        var lobby, color, name, x, y;
+        var lobby, color, name, x, y, vX = 0, vY = 0;
         var speed = 2, pW = 40, pH = 80;
         var toDraw = [];
+        var jump, jumping = false;
         
         
         socket.on('connect', function(){
@@ -101,20 +102,36 @@
         
         function move(key){
           if (key == "UP"){
-            
+            if (!jumping){
+              jumping = true;
+              vY -= 10;
+            }
           }
           if (key == "RIGHT"){
-            x += speed;
+            if (vX < speed){
+              vX += speed;
+            }
           }
           if (key == "DOWN"){
             
           }
           if (key == "LEFT"){
-            x -= speed;
+            if (vX > -speed){
+              vX -= speed;
+            }
           }
         }
         
         function movement(room){
+          x += vX;
+          y += vY;
+          vX *= .8;
+          vY += .25;
+          if (y+pH > (standardH/15) * 14){
+            jumping = false;
+            y = ((standardH/15) * 14)-(pH);
+            vY = 0;
+          }
           socket.emit('move', room, name, color, x, y);
         }
         
