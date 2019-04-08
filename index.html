@@ -17,7 +17,7 @@
       text-align:center;
       }
       #game {
-        border: 2px solid black;
+        
       }
     </style>
   </head>
@@ -43,6 +43,7 @@
         var speed = 2, pW = 40, pH = 80;
         var toDraw = [];
         var jump, jumping = false;
+        var camX = 0, camY = 0;
         
         
         socket.on('connect', function(){
@@ -92,7 +93,7 @@
         }
         
         function draw(){
-          ctx.drawImage(background,0,0,canvas.width,canvas.height);
+          ctx.drawImage(background,camX,camY,1000+camX,750+camY,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
             ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
@@ -131,13 +132,34 @@
           y += vY;
           vX *= .8;
           vY += .25;
+          //gravity
           if (y+pH > (standardH/15) * 14){
             jumping = false;
             y = ((standardH/15) * 14)-(pH);
             vY = 0;
           }
-          
-          
+          //walls
+          if (x+pW > 806){
+            x = 806-pW;
+          }
+          if (x < 0){
+            x = 0;
+          }
+          //side scrolling
+          if (room == 'lobby'){
+            if (x+pW > 3*(standardW/4) && camX != 1000-1000){
+              camX += (x+pW)-(3*(standardW/4));
+              x = 3*(standardW/4)-pW;
+            }
+            if (x < 1*(standardW/4) && camX != 0){
+              camX -= (1*(standardW/4))-x;
+              x = x-(standardW/4);
+              
+            }
+          }
+        
+        
+          //local lag reduction
           var temp = null;
           for (var i = 0; i < toDraw.length; i++){
             if (toDraw[i].name == name){
