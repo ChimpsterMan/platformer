@@ -96,6 +96,10 @@
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
             ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
+            ctx.fillStyle = "#000";
+            ctx.font = "5vh Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(toDraw[i].name, scaleX(toDraw[i].x) + scaleX(pW/2), scaleY(toDraw[i].y) - scaleY(10));
             //ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
           }
         }
@@ -132,15 +136,31 @@
             y = ((standardH/15) * 14)-(pH);
             vY = 0;
           }
+          
+          
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == name){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw[temp] = {name:name, color:color, x:x, y:y};
+          } else {
+            toDraw.push({name:name, color:color, x:x, y:y});
+          }
+          
+          
           socket.emit('move', room, name, color, x, y);
         }
         
       var keyState = {};  
       setInterval(keyLoop, 10);
-      window.addEventListener('keydown',function(e){
+      window.document.addEventListener('keydown',function(e){
         keyState[e.keyCode || e.which] = true;
       },true);    
-      window.addEventListener('keyup',function(e){
+      window.document.addEventListener('keyup',function(e){
         keyState[e.keyCode || e.which] = false;
       },true);
       
