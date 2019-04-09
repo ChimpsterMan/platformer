@@ -1,7 +1,7 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 2000;
 var colors = ['#800000', '#808000', '#008000', '#000080', '#800080'],
     users = [], online = 0, colorChoice = 0;
 

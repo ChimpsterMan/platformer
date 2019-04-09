@@ -30,6 +30,7 @@
     <div style="display:none">
       <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png">
       <img id="LOBBY" src="http://chimpsterman.github.io/pics/platformer/map_001.png" width="2000" height="750">
+      <img id="LOBBYC" src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png" width="2000" height="750">
     </div>
     <script>
       $(function(){
@@ -37,6 +38,7 @@
         var canvas = document.getElementById('game');
         var background = document.getElementById('BG');
         var lobbyMap = document.getElementById('LOBBY');
+        var lobbyMapC = document.getElementById('LOBBYC');
         canvas.height = window.innerHeight;
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
@@ -96,7 +98,7 @@
         
         function draw(){
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
-          ctx.drawImage(lobbyMap,camX,camY,1000+camX,750+camY,0,0,canvas.width,canvas.height);
+          ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
             ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
@@ -151,11 +153,11 @@
           //side scrolling
           if (room == 'lobby'){
             if (x+pW > 3*(standardW/4) && camX <= 1000){
-              camX += (x+pW)-(3*(standardW/4));
+              camX += scaleXNum((x+pW)-(3*(standardW/4)),1000);
               x = 3*(standardW/4)-pW;
             }
             if (x < 1*(standardW/4) && camX >= 0){
-              camX -= (1*(standardW/4)-x);
+              camX -= scaleXNum(1*(standardW/4)-x,1000);
               x = (standardW/4);
               
             }
@@ -211,6 +213,14 @@
         
       function scaleY(num){
         return canvas.height/(standardH/num);
+      }
+        
+      function scaleXNum(num, numScale){
+        return numScale/(standardW/num);
+      }
+      
+      function scaleYNum(num, numScale){
+        return numScale/(standardH/num);
       }
         
       });
