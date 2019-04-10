@@ -39,6 +39,7 @@
         var background = document.getElementById('BG');
         var lobbyMap = document.getElementById('LOBBY');
         var lobbyMapC = document.getElementById('LOBBYC');
+        lobbyMapC.crossOrigin = "Anonymous";
         canvas.height = window.innerHeight;
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
