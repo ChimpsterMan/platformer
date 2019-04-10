@@ -27,19 +27,17 @@
       <canvas id="game"></canvas>
     </div>
     
-    <div style="display:none">
-      <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png">
-      <img id="LOBBY" src="http://chimpsterman.github.io/pics/platformer/map_001.png" width="2000" height="750">
-      <img id="LOBBYC" src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png" width="2000" height="750">
-    </div>
+    
     <script>
       $(function(){
         var socket = io();
         var canvas = document.getElementById('game');
-        var background = document.getElementById('BG');
-        var lobbyMap = document.getElementById('LOBBY');
-        var lobbyMapC = document.getElementById('LOBBYC');
-        lobbyMapC.crossOrigin = "Anonymous";
+        var background = new Image();
+        var lobbyMap = new Image;
+        var lobbyMapC = new Image();
+        background.src = "http://chimpsterman.github.io/pics/platformer/BG/BG.png";
+        lobbyMap.src = "http://chimpsterman.github.io/pics/platformer/map_001.png";
+        lobbyMapC.src = "http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png";
         canvas.height = window.innerHeight;
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
@@ -49,6 +47,7 @@
         var toDraw = [];
         var jump, jumping = false;
         var camX = 0, camY = 0;
+        var count = 
         
         
         socket.on('connect', function(){
@@ -133,17 +132,20 @@
         
         function movement(room){
           var cMap;
-          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          //ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
           vX *= .8;
           vY += .25;
           //gravity
-          cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
-          if ("#000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-            jumping = false;
-            vY = 0;
-          }
+          
+          //cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, scaleX(pW), 1).data;
+          
+          //if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+          //  jumping = false;
+          //  vY = 0;
+          //}
+          
           //walls
           if (x+pW > 806){
             x = 806-pW;

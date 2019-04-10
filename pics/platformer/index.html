@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <meta charset="utf-8">
+    <title>Platformer</title>
+    <style>
+      * {
+      margin: 0;
+      padding: 0;
+      }
+      body{
+        overflow:hidden;
+      }
+      #field {
+      text-align:center;
+      }
+      #game {
+        
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="debug"></h1>
+    <div id="field">
+      <canvas id="game"></canvas>
+    </div>
+    
+    <div style="display:none">
+      <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png">
+      <img id="LOBBY" src="http://chimpsterman.github.io/pics/platformer/map_001.png" width="2000" height="750">
+      <img id="LOBBYC" src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png" width="2000" height="750">
+    </div>
+    <script>
+      $(function(){
+        var socket = io();
+        var canvas = document.getElementById('game');
+        var background = new Image();
+        var lobbyMap = new Image;
+        var lobbyMapC = new Image();
+        background.src = "http://chimpsterman.github.io/pics/platformer/BG/BG.png";
+        lobbyMap.src = "http://chimpsterman.github.io/pics/platformer/map_001.png";
+        lobbyMapC.src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png";
+        canvas.height = window.innerHeight;
+        canvas.width = (window.innerHeight/3)*4;
+        var ctx = canvas.getContext("2d");
+        var standardH = 605, standardW = 806;
+        var lobby, color, name, x, y, vX = 0, vY = 0;
+        var speed = 2, pW = 40, pH = 80;
+        var toDraw = [];
+        var jump, jumping = false;
+        var camX = 0, camY = 0;
+        
+        
+        socket.on('connect', function(){
+          name = prompt('Please Enter a Username');
+          socket.emit('newconnection', name);
+        });
+        
+        socket.on('setup', function(c){
+          color = c;
+          x = (standardW/2)-(pW/2);
+          y = ((standardH/15) * 13)-(pH/2);
+          lobby = setInterval(lobbySequence, 10);
+        });
+        
+        socket.on('disconnection', function(user){
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == user){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw.splice(temp,1);
+          }
+        });
+        
+        socket.on('newMove', function(n, c, X, Y){
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == n){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw[temp] = {name:n, color:c, x:X, y:Y};
+          } else {
+            toDraw.push({name:n, color:c, x:X, y:Y});
+          }
+        });
+        
+        function lobbySequence(){
+          movement('lobby');
+        }
+        
+        function draw(){
+          ctx.drawImage(background,0,0,canvas.width,canvas.height);
+          ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          for (var i = 0; i < toDraw.length; i++){
+            ctx.fillStyle = toDraw[i].color;
+            ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
+            ctx.fillStyle = "#000";
+            ctx.font = "5vh Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(toDraw[i].name, scaleX(toDraw[i].x) + scaleX(pW/2), scaleY(toDraw[i].y) - scaleY(10));
+            //ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
+          }
+        }
+        
+        function move(key){
+          if (key == "UP"){
+            if (!jumping){
+              jumping = true;
+              vY -= 10;
+            }
+          }
+          if (key == "RIGHT"){
+            if (vX < speed){
+              vX += speed;
+            }
+          }
+          if (key == "DOWN"){
+            
+          }
+          if (key == "LEFT"){
+            if (vX > -speed){
+              vX -= speed;
+            }
+          }
+        }
+        
+        function movement(room){
+          var cMap;
+          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          x += vX;
+          y += vY;
+          vX *= .8;
+          vY += .25;
+          //gravity
+          
+          cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+          if ("#000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+            jumping = false;
+            vY = 0;
+          }
+          //walls
+          if (x+pW > 806){
+            x = 806-pW;
+          }
+          if (x < 0){
+            x = 0;
+          }
+          //side scrolling
+          if (room == 'lobby'){
+            if (x+pW > 2*(standardW/3) && camX <= 1000){
+              camX += scaleXNum((x+pW)-(2*(standardW/3)),1000);
+              x = 2*(standardW/3)-pW;
+            }
+            if (x < 1*(standardW/3) && camX >= 0){
+              camX -= scaleXNum(1*(standardW/3)-x,1000);
+              x = (standardW/3);
+              
+            }
+          }
+        
+        
+          //local lag reduction
+          var temp = null;
+          for (var i = 0; i < toDraw.length; i++){
+            if (toDraw[i].name == name){
+              temp = i;
+              break;
+            }
+          }
+          if (temp != null){
+            toDraw[temp] = {name:name, color:color, x:x, y:y};
+          } else {
+            toDraw.push({name:name, color:color, x:x, y:y});
+          }
+          
+          
+          socket.emit('move', room, name, color, x + camX, y);
+          draw();
+        }
+        
+      var keyState = {};  
+      setInterval(keyLoop, 10);
+      window.document.addEventListener('keydown',function(e){
+        keyState[e.keyCode || e.which] = true;
+      },true);    
+      window.document.addEventListener('keyup',function(e){
+        keyState[e.keyCode || e.which] = false;
+      },true);
+      
+      function keyLoop() {
+        if (keyState[37]){
+          move("LEFT");
+        } 
+        if (keyState[38]){
+          move("UP");
+        } 
+        if (keyState[39]){
+          move("RIGHT");
+        }
+        if (keyState[40]){
+          move("DOWN");
+        } 
+      }  
+        
+      //utilities
+      function scaleX(num){
+        return canvas.width/(standardW/num);
+      }
+        
+      function scaleY(num){
+        return canvas.height/(standardH/num);
+      }
+        
+      function scaleXNum(num, numScale){
+        return numScale/(standardW/num);
+      }
+      
+      function scaleYNum(num, numScale){
+        return numScale/(standardH/num);
+      }
+        
+      function rgbToHex(red, green, blue) {
+        var rgb = blue | (green << 8) | (red << 16);
+        return '#' + (0x1000000 + rgb).toString(16).slice(1);
+      }
+        
+      });
+    </script>
+  </body>
+</html>
