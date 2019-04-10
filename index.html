@@ -92,8 +92,6 @@
         
         function lobbySequence(){
           movement('lobby');
-          
-          draw();
         }
         
         function draw(){
@@ -133,14 +131,16 @@
         }
         
         function movement(room){
+          var cMap;
+          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
           vX *= .8;
           vY += .25;
           //gravity
-          if (y+pH > (standardH/15) * 14){
+          cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+          if ("#000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
             jumping = false;
-            y = ((standardH/15) * 14)-(pH);
             vY = 0;
           }
           //walls
@@ -152,13 +152,13 @@
           }
           //side scrolling
           if (room == 'lobby'){
-            if (x+pW > 3*(standardW/4) && camX <= 1000){
-              camX += scaleXNum((x+pW)-(3*(standardW/4)),1000);
-              x = 3*(standardW/4)-pW;
+            if (x+pW > 2*(standardW/3) && camX <= 1000){
+              camX += scaleXNum((x+pW)-(2*(standardW/3)),1000);
+              x = 2*(standardW/3)-pW;
             }
-            if (x < 1*(standardW/4) && camX >= 0){
-              camX -= scaleXNum(1*(standardW/4)-x,1000);
-              x = (standardW/4);
+            if (x < 1*(standardW/3) && camX >= 0){
+              camX -= scaleXNum(1*(standardW/3)-x,1000);
+              x = (standardW/3);
               
             }
           }
@@ -180,6 +180,7 @@
           
           
           socket.emit('move', room, name, color, x + camX, y);
+          draw();
         }
         
       var keyState = {};  
@@ -221,6 +222,11 @@
       
       function scaleYNum(num, numScale){
         return numScale/(standardH/num);
+      }
+        
+      function rgbToHex(red, green, blue) {
+        var rgb = blue | (green << 8) | (red << 16);
+        return '#' + (0x1000000 + rgb).toString(16).slice(1);
       }
         
       });
