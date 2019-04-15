@@ -45,11 +45,10 @@
         var ctx = canvas.getContext("2d");
         var standardH = 605, standardW = 806;
         var lobby, color, name, x, y, vX = 0, vY = 0;
-        var speed = 2, pW = 40, pH = 80;
+        var speed = 5, pW = 40, pH = 80;
         var toDraw = [];
         var jump, jumping = false;
         var camX = 0, camY = 0;
-        var count = 
         
         
         socket.on('connect', function(){
@@ -61,7 +60,7 @@
           color = c;
           x = (standardW/2)-(pW/2);
           y = ((standardH/15) * 13)-(pH/2);
-          lobby = setInterval(lobbySequence, 10);
+          lobby = setInterval(lobbySequence, 25);
         });
         
         socket.on('disconnection', function(user){
@@ -112,9 +111,9 @@
         
         function move(key){
           if (key == "UP"){
-            if (!jumping){
+            if (!jumping && vY >= 0){
               jumping = true;
-              vY -= 10;
+              vY -= 20;
             }
           }
           if (key == "RIGHT"){
@@ -137,20 +136,29 @@
           ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
-          vX *= .8;
-          vY += .25;
+          vX *= .9;
+          
+          if (vY <= 15){
+            vY += 1;
+          }
+          
           //gravity
           
-          try {
-            cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, scaleX(pW), 1).data;
-          }
-          catch(err) {
-            socket.emit('log', err);
-          }
+          cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) + 1, 1, 2).data;
           
-          if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-            jumping = false;
+          if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2]) && vY >= 0){
             vY = 0;
+            jumping = false;
+            
+            /*var count = 0;
+            while (jumping){
+              cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
+              if ("#FFFFFF" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+                jumping = false;
+                y -= scaleYNum(count-1,1000);
+              }
+              count += 1;
+            }*/
           }
           
           //walls
