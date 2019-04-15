@@ -1,7 +1,6 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var cors = require('cors'); app.use(cors());
 var port = process.env.PORT || 2000;
 var colors = ['#800000', '#808000', '#008000', '#000080', '#800080'],
     users = [], online = 0, colorChoice = 0;
@@ -11,6 +10,10 @@ app.get('/', function(req, res) {
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
   res.header("Access-Control-Allow-Headers", "Content-Type");
   res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/pics/:Image', function (req, res){
+  res.sendFile(__dirname + '/pics/' + req.params.Image);
 });
 
 io.on('connection', function(socket){

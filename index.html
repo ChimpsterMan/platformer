@@ -27,27 +27,19 @@
       <canvas id="game"></canvas>
     </div>
     <div style="display:none">
-      <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png" crossorigin="anonymous">
-      <img id="LOBBYMAP" src="http://chimpsterman.github.io/pics/platformer/map_001.png" crossorigin="anonymous">
-      <img id="LOBBYMAPC" src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png" crossorigin="anonymous">
+      
     </div>
     
     <script>
       $(function(){
         var socket = io();
         var canvas = document.getElementById('game');
-        //var background = document.getElementById('BG');
-        //var lobbyMap = document.getElementById('LOBBYMAP');
-        //var lobbyMapC = document.getElementById('LOBBYMAPC');
         var background = new Image();
         var lobbyMap = new Image;
         var lobbyMapC = new Image();
-        background.src = "http://chimpsterman.github.io/pics/platformer/BG/BG.png";
-        lobbyMap.src = "http://chimpsterman.github.io/pics/platformer/map_001.png";
-        lobbyMapC.src = "http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png";
-        background.crossOrigin = "Anonymous";
-        lobbyMap.crossOrigin = "Anonymous";
-        lobbyMapC.crossOrigin = "Anonymous";
+        background.src = "/pics/BG";
+        lobbyMap.src = "/pics/map_001.png";
+        lobbyMapC.src = "/pics/map_001_hitboxes.png";
         canvas.height = window.innerHeight;
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
@@ -142,7 +134,7 @@
         
         function movement(room){
           var cMap;
-          //ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
           vX *= .8;
