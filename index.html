@@ -26,12 +26,19 @@
     <div id="field">
       <canvas id="game"></canvas>
     </div>
-    
+    <div style="display:none">
+      <img id="BG" src="http://chimpsterman.github.io/pics/platformer/BG/BG.png" crossorigin="anonymous">
+      <img id="LOBBYMAP" src="http://chimpsterman.github.io/pics/platformer/map_001.png" crossorigin="anonymous">
+      <img id="LOBBYMAPC" src="http://chimpsterman.github.io/pics/platformer/map_001_hitboxes.png" crossorigin="anonymous">
+    </div>
     
     <script>
       $(function(){
         var socket = io();
         var canvas = document.getElementById('game');
+        //var background = document.getElementById('BG');
+        //var lobbyMap = document.getElementById('LOBBYMAP');
+        //var lobbyMapC = document.getElementById('LOBBYMAPC');
         var background = new Image();
         var lobbyMap = new Image;
         var lobbyMapC = new Image();
@@ -135,14 +142,19 @@
         
         function movement(room){
           var cMap;
-          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          //ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
           vX *= .8;
           vY += .25;
           //gravity
           
-          cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, scaleX(pW), 1).data;
+          try {
+            cMap = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, scaleX(pW), 1).data;
+          }
+          catch(err) {
+            socket.emit('log', err);
+          }
           
           if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
             jumping = false;
