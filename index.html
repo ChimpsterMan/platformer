@@ -119,7 +119,7 @@
           }
           if (key == "RIGHT"){
             if (vX < speed){
-              vX += speed;
+              vX += speed/10;
             }
           }
           if (key == "DOWN"){
@@ -127,13 +127,13 @@
           }
           if (key == "LEFT"){
             if (vX > -speed){
-              vX -= speed;
+              vX -= speed/10;
             }
           }
         }
         
         function movement(room){
-          var cMap;
+          var cMap, cMapL, cMapR;
           ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
@@ -145,9 +145,10 @@
           
           //gravity
           
-          cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
-          
-          if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2]) && vY >= 0){
+          cMapL = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+          cMapR = ctx.getImageData(scaleX(x) + scaleX(pW), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+		  
+          if (("#000000" == rgbToHex(cMapL[0],cMapL[1],cMapL[2]) && vY >= 0) || ("#000000" == rgbToHex(cMapR[0],cMapR[1],cMapR[2]) && vY >= 0)){
             //jumping = false;
             
             vY = 0;
