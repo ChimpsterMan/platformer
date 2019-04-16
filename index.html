@@ -148,18 +148,19 @@
           cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) + 1, 1, 2).data;
           
           if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2]) && vY >= 0){
-            vY = 0;
             jumping = false;
             
+            vY = 0;
             /*var count = 0;
-            while (jumping){
+            while (jumping || count >= 100){
               cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
               if ("#FFFFFF" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-                jumping = false;
+                break;
                 y -= scaleYNum(count-1,1000);
               }
               count += 1;
-            }*/
+            }
+            jumping = false;*/
           }
           
           //walls
