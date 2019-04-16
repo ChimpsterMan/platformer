@@ -98,7 +98,7 @@
         
         function draw(){
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
-          ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
             ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
@@ -145,22 +145,23 @@
           
           //gravity
           
-          cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) + 1, 1, 2).data;
+          cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
           
           if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2]) && vY >= 0){
-            jumping = false;
+            //jumping = false;
             
             vY = 0;
-            /*var count = 0;
-            while (jumping || count >= 100){
+            var count = 0;
+			jumping = true;
+            while (jumping && count < 100){
               cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
-              if ("#FFFFFF" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-                break;
-                y -= scaleYNum(count-1,1000);
-              }
-              count += 1;
+              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+				count += 1;
+              } else {
+				jumping = false;
+                y -= count/1.5; 
+			  }
             }
-            jumping = false;*/
           }
           
           //walls
