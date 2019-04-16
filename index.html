@@ -98,7 +98,7 @@
         
         function draw(){
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
-          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
+          ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
             ctx.fillStyle = toDraw[i].color;
             ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
