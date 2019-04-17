@@ -46,7 +46,7 @@
         var ctx = canvas.getContext("2d");
         var standardH = 605, standardW = 806;
         var lobby, color, name, x, y, vX = 0, vY = 0;
-        var speed = 6, pW = 40, pH = 80;
+        var speed = 10, pW = 40, pH = 80;
         var toDraw = [];
         var jump, jumping = false;
         var camX = 0, camY = 0;
@@ -61,7 +61,7 @@
           color = c;
           x = (standardW/2)-(pW/2);
           y = ((standardH/15) * 13)-(pH/2);
-          lobby = setInterval(lobbySequence, 25);
+          lobby = setInterval(lobbySequence, 33);
         });
         
         socket.on('disconnection', function(user){
@@ -137,10 +137,10 @@
           ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
-          vX *= .9;
+          vX *= .90;
           
           if (vY <= 15){
-            vY += 1;
+            vY += 1.1;
           }
           
           //gravity
@@ -154,7 +154,7 @@
             vY = 0;
             var count = 0;
 			jumping = true;
-            while (jumping && count < 100){
+            while (jumping && count < 20){
               cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
               if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
 				count += 1;
@@ -170,7 +170,7 @@
             vX = 0;
             var count = 0;
 			var colliding = true;
-            while (colliding && count < 100){
+            while (colliding && count < 20){
               cMap = ctx.getImageData(scaleX(x) + count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
               if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
 				count += 1;
@@ -185,7 +185,7 @@
             vX = 0;
             var count = 0;
 			var colliding = true;
-            while (colliding && count < 100){
+            while (colliding && count < 20){
               cMap = ctx.getImageData(scaleX(x) + scaleX(pW) - count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
               if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
 				count += 1;
