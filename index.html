@@ -46,7 +46,7 @@
         var ctx = canvas.getContext("2d");
         var standardH = 605, standardW = 806;
         var lobby, color, name, x, y, vX = 0, vY = 0;
-        var speed = 5, pW = 40, pH = 80;
+        var speed = 6, pW = 40, pH = 80;
         var toDraw = [];
         var jump, jumping = false;
         var camX = 0, camY = 0;
@@ -133,7 +133,7 @@
         }
         
         function movement(room){
-          var cMap, cMapL, cMapR;
+          var cMap, cMapL, cMapR, cMapLM, cMapRM;
           ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           x += vX;
           y += vY;
@@ -147,10 +147,10 @@
           
           cMapL = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
           cMapR = ctx.getImageData(scaleX(x) + scaleX(pW), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+		  cMapLM = ctx.getImageData(scaleX(x) - 1, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
+          cMapRM = ctx.getImageData(scaleX(x) + scaleX(pW) + 1, scaleY(y) + scaleY((pH/3)*2) + 1, 1, 1).data;
 		  
           if (("#000000" == rgbToHex(cMapL[0],cMapL[1],cMapL[2]) && vY >= 0) || ("#000000" == rgbToHex(cMapR[0],cMapR[1],cMapR[2]) && vY >= 0)){
-            //jumping = false;
-            
             vY = 0;
             var count = 0;
 			jumping = true;
@@ -166,6 +166,36 @@
           }
           
           //walls
+		  if ("#000000" == rgbToHex(cMapLM[0],cMapLM[1],cMapLM[2])){
+            vX = 0;
+            var count = 0;
+			var colliding = true;
+            while (colliding && count < 100){
+              cMap = ctx.getImageData(scaleX(x) + count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
+              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+				count += 1;
+              } else {
+				colliding = false;
+                x += count/2; 
+			  }
+            }
+          }
+			
+		  if ("#000000" == rgbToHex(cMapRM[0],cMapRM[1],cMapRM[2])){
+            vX = 0;
+            var count = 0;
+			var colliding = true;
+            while (colliding && count < 100){
+              cMap = ctx.getImageData(scaleX(x) + scaleX(pW) - count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
+              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
+				count += 1;
+              } else {
+				colliding = false;
+                x -= count/2;
+			  }
+            }
+          }
+		  
           if (x+pW > 806){
             x = 806-pW;
           }
