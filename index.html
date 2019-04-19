@@ -38,15 +38,17 @@
         var background = new Image();
         var lobbyMap = new Image;
         var lobbyMapC = new Image();
+		var skin = new Image();
         background.src = "/pics/BG.png";
         lobbyMap.src = "/pics/map_001.png";
         lobbyMapC.src = "/pics/map_001_hitboxes.png";
+		skin.src = "/pics/sans.png";
         canvas.height = window.innerHeight;
         canvas.width = (window.innerHeight/3)*4;
         var ctx = canvas.getContext("2d");
         var standardH = 605, standardW = 806;
         var lobby, color, name, x, y, vX = 0, vY = 0;
-        var speed = 10, pW = 40, pH = 80;
+        var speed = 10, pW = 50, pH = 71;
         var toDraw = [];
         var jump, jumping = false;
         var camX = 0, camY = 0;
@@ -100,13 +102,16 @@
           ctx.drawImage(background,0,0,canvas.width,canvas.height);
           ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
           for (var i = 0; i < toDraw.length; i++){
+			var newX = toDraw[i].x;
             ctx.fillStyle = toDraw[i].color;
-            ctx.fillRect(scaleX(toDraw[i].x),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
+			if (toDraw[i].name != name){
+				newX -= (standardW/1000)*camX;
+			}
+            ctx.drawImage(skin,scaleX(newX),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
             ctx.fillStyle = "#000";
             ctx.font = "5vh Arial";
             ctx.textAlign = "center";
-            ctx.fillText(toDraw[i].name, scaleX(toDraw[i].x) + scaleX(pW/2), scaleY(toDraw[i].y) - scaleY(10));
-            //ctx.fillRect(toDraw[i].x,toDraw[i].y,pW,pH);
+            ctx.fillText(toDraw[i].name, scaleX(newX) + scaleX(pW/2), scaleY(toDraw[i].y) - scaleY(10));
           }
         }
         
@@ -154,7 +159,7 @@
             vY = 0;
             var count = 0;
 			jumping = true;
-            while (jumping && count < 20){
+            while (jumping && count < 40){
               cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
               if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
 				count += 1;
@@ -231,7 +236,7 @@
           }
           
           
-          socket.emit('move', room, name, color, x + camX, y);
+          socket.emit('move', room, name, color, x + (standardW/1000)*camX, y);
           draw();
         }
         
