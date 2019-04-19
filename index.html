@@ -1,292 +1,396 @@
 <!doctype html>
 <html>
-  <head>
+
+<head>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <meta charset="utf-8">
     <title>Platformer</title>
     <style>
-      * {
-      margin: 0;
-      padding: 0;
-      }
-      body{
-        overflow:hidden;
-        background: #333;
-      }
-      #field {
-      text-align:center;
-      }
-      #game {
+        * {
+            margin: 0;
+            padding: 0;
+        }
         
-      }
+        body {
+            overflow: hidden;
+            background: #333;
+        }
+        
+        #field {
+            text-align: center;
+        }
+        
+        #game {}
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <h1 id="debug"></h1>
     <div id="field">
-      <canvas id="game"></canvas>
+        <canvas id="game"></canvas>
     </div>
     <div style="display:none">
-      
+
     </div>
-    
+
     <script>
-      $(function(){
-        var socket = io();
-        var canvas = document.getElementById('game');
-        var background = new Image();
-        var lobbyMap = new Image;
-        var lobbyMapC = new Image();
-		var skin = new Image();
-        background.src = "/pics/BG.png";
-        lobbyMap.src = "/pics/map_001.png";
-        lobbyMapC.src = "/pics/map_001_hitboxes.png";
-		skin.src = "/pics/sans.png";
-        canvas.height = window.innerHeight;
-        canvas.width = (window.innerHeight/3)*4;
-        var ctx = canvas.getContext("2d");
-        var standardH = 605, standardW = 806;
-        var lobby, color, name, x, y, vX = 0, vY = 0;
-        var speed = 10, pW = 50, pH = 71;
-        var toDraw = [];
-        var jump, jumping = false;
-        var camX = 0, camY = 0;
-        
-        
-        socket.on('connect', function(){
-          name = prompt('Please Enter a Username');
-          socket.emit('newconnection', name);
-        });
-        
-        socket.on('setup', function(c){
-          color = c;
-          x = (standardW/2)-(pW/2);
-          y = ((standardH/15) * 13)-(pH/2);
-          lobby = setInterval(lobbySequence, 33);
-        });
-        
-        socket.on('disconnection', function(user){
-          var temp = null;
-          for (var i = 0; i < toDraw.length; i++){
-            if (toDraw[i].name == user){
-              temp = i;
-              break;
+        $(function() {
+            var socket = io();
+            var canvas = document.getElementById('game');
+            var background = new Image();
+            var lobbyMap = new Image;
+            var lobbyMapC = new Image();
+            var skin = new Image();
+            background.src = "/pics/BG.png";
+            lobbyMap.src = "/pics/map_001.png";
+            lobbyMapC.src = "/pics/map_001_hitboxes.png";
+            skin.src = "/pics/sans.png";
+            canvas.height = window.innerHeight;
+            canvas.width = (window.innerHeight / 3) * 4;
+            var ctx = canvas.getContext("2d");
+            var standardH = 605,
+                standardW = 806;
+            var lobby, color, name, x, y, vX = 0,
+                vY = 0;
+            var speed = 10,
+                pW = 50,
+                pH = 71;
+            var toDraw = [];
+            var jump, jumping = false;
+            var camX = 0,
+                camY = 0;
+            var lobbyC = new Array(2000);
+
+            socket.on('connect', function() {
+                name = prompt('Please Enter a Username');
+                socket.emit('newconnection', name);
+                //loadCollisions(lobbyC,lobbyMapC);
+            });
+
+            socket.on('setup', function(c) {
+                color = c;
+                x = (standardW / 2) - (pW / 2);
+                y = ((standardH / 15) * 13) - (pH / 2);
+                lobby = setInterval(lobbySequence, 33);
+            });
+
+            socket.on('disconnection', function(user) {
+                var temp = null;
+                for (var i = 0; i < toDraw.length; i++) {
+                    if (toDraw[i].name == user) {
+                        temp = i;
+                        break;
+                    }
+                }
+                if (temp != null) {
+                    toDraw.splice(temp, 1);
+                }
+            });
+
+            socket.on('newMove', function(n, c, X, Y) {
+                var temp = null;
+                for (var i = 0; i < toDraw.length; i++) {
+                    if (toDraw[i].name == n) {
+                        temp = i;
+                        break;
+                    }
+                }
+                if (temp != null) {
+                    toDraw[temp] = {
+                        name: n,
+                        color: c,
+                        x: X,
+                        y: Y
+                    };
+                } else {
+                    toDraw.push({
+                        name: n,
+                        color: c,
+                        x: X,
+                        y: Y
+                    });
+                }
+            });
+
+            function lobbySequence() {
+                movement('lobby');
             }
-          }
-          if (temp != null){
-            toDraw.splice(temp,1);
-          }
-        });
-        
-        socket.on('newMove', function(n, c, X, Y){
-          var temp = null;
-          for (var i = 0; i < toDraw.length; i++){
-            if (toDraw[i].name == n){
-              temp = i;
-              break;
+
+            function draw() {
+                ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(lobbyMap, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
+                for (var i = 0; i < toDraw.length; i++) {
+                    var newX = toDraw[i].x;
+                    ctx.fillStyle = toDraw[i].color;
+                    if (toDraw[i].name != name) {
+                        newX -= (standardW / 1000) * camX;
+                    }
+                    ctx.drawImage(skin, scaleX(newX), scaleY(toDraw[i].y), scaleX(pW), scaleY(pH));
+                    ctx.fillStyle = "#000";
+                    ctx.font = "5vh Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(toDraw[i].name, scaleX(newX) + scaleX(pW / 2), scaleY(toDraw[i].y) - scaleY(10));
+                }
             }
-          }
-          if (temp != null){
-            toDraw[temp] = {name:n, color:c, x:X, y:Y};
-          } else {
-            toDraw.push({name:n, color:c, x:X, y:Y});
-          }
-        });
-        
-        function lobbySequence(){
-          movement('lobby');
-        }
-        
-        function draw(){
-          ctx.drawImage(background,0,0,canvas.width,canvas.height);
-          ctx.drawImage(lobbyMap,camX,camY,1000,750,0,0,canvas.width,canvas.height);
-          for (var i = 0; i < toDraw.length; i++){
-			var newX = toDraw[i].x;
-            ctx.fillStyle = toDraw[i].color;
-			if (toDraw[i].name != name){
-				newX -= (standardW/1000)*camX;
-			}
-            ctx.drawImage(skin,scaleX(newX),scaleY(toDraw[i].y),scaleX(pW),scaleY(pH));
-            ctx.fillStyle = "#000";
-            ctx.font = "5vh Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(toDraw[i].name, scaleX(newX) + scaleX(pW/2), scaleY(toDraw[i].y) - scaleY(10));
-          }
-        }
-        
-        function move(key){
-          if (key == "UP"){
-            if (!jumping && vY >= 0){
-              jumping = true;
-              vY -= 20;
+
+            function move(key) {
+                if (key == "UP") {
+                    if (!jumping && vY >= 0) {
+                        jumping = true;
+                        vY -= 20;
+                    }
+                }
+                if (key == "RIGHT") {
+                    if (vX < speed) {
+                        vX += speed / 10;
+                    }
+                }
+                if (key == "DOWN") {
+
+                }
+                if (key == "LEFT") {
+                    if (vX > -speed) {
+                        vX -= speed / 10;
+                    }
+                }
             }
-          }
-          if (key == "RIGHT"){
-            if (vX < speed){
-              vX += speed/10;
+
+            function movement(room) {
+                var cMap, cMapL, cMapR, cMapLM, cMapRM;
+                ctx.drawImage(lobbyMapC, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
+				/*
+				y = checkCollision(lobbyC, x + pW/2, y + pH, x + pW/2, vY)-pH;
+				if (vX > 0){
+					x = checkCollision(lobbyC, x + pW, y + pH, vX, y)-pW;
+				} 
+				else if (vX < 0){
+					x = checkCollision(lobbyC, x, y + pH, vX, y + pH);
+				}*/
+				
+                x += vX;
+                y += vY;
+                vX *= .90;
+
+                if (vY <= 15) {
+                    vY += 1.1;
+                }
+				
+                //gravity
+				
+                cMapL = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+                cMapR = ctx.getImageData(scaleX(x) + scaleX(pW), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
+                cMapLM = ctx.getImageData(scaleX(x) - 1, scaleY(y) + scaleY((pH / 3) * 2), 1, 1).data;
+                cMapRM = ctx.getImageData(scaleX(x) + scaleX(pW) + 1, scaleY(y) + scaleY((pH / 3) * 2) + 1, 1, 1).data;
+
+                if (("#000000" == rgbToHex(cMapL[0], cMapL[1], cMapL[2]) && vY >= 0) || ("#000000" == rgbToHex(cMapR[0], cMapR[1], cMapR[2]) && vY >= 0)) {
+                    vY = 0;
+                    var count = 0;
+                    jumping = true;
+                    while (jumping && count < 40) {
+                        cMap = ctx.getImageData(scaleX(x) + scaleX(pW / 2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
+                        if ("#000000" == rgbToHex(cMap[0], cMap[1], cMap[2])) {
+                            count += 1;
+                        } else {
+                            jumping = false;
+                            y -= count / 1.5;
+                        }
+                    }
+                }
+
+                //walls
+                if ("#000000" == rgbToHex(cMapLM[0], cMapLM[1], cMapLM[2])) {
+                    vX = 0;
+                    var count = 0;
+                    var colliding = true;
+                    while (colliding && count < 20) {
+                        cMap = ctx.getImageData(scaleX(x) + count, scaleY(y) + scaleY((pH / 3) * 2), 1, 1).data;
+                        if ("#000000" == rgbToHex(cMap[0], cMap[1], cMap[2])) {
+                            count += 1;
+                        } else {
+                            colliding = false;
+                            x += count / 2;
+                        }
+                    }
+                }
+
+                if ("#000000" == rgbToHex(cMapRM[0], cMapRM[1], cMapRM[2])) {
+                    vX = 0;
+                    var count = 0;
+                    var colliding = true;
+                    while (colliding && count < 20) {
+                        cMap = ctx.getImageData(scaleX(x) + scaleX(pW) - count, scaleY(y) + scaleY((pH / 3) * 2), 1, 1).data;
+                        if ("#000000" == rgbToHex(cMap[0], cMap[1], cMap[2])) {
+                            count += 1;
+                        } else {
+                            colliding = false;
+                            x -= count / 2;
+                        }
+                    }
+                }
+
+                if (x + pW > 806) {
+                    x = 806 - pW;
+                }
+                if (x < 0) {
+                    x = 0;
+                }
+                //side scrolling
+                if (room == 'lobby') {
+                    if (x + pW > 2 * (standardW / 3) && camX <= 1000) {
+                        camX += scaleXNum((x + pW) - (2 * (standardW / 3)), 1000);
+                        x = 2 * (standardW / 3) - pW;
+                    }
+                    if (x < 1 * (standardW / 3) && camX >= 0) {
+                        camX -= scaleXNum(1 * (standardW / 3) - x, 1000);
+                        x = (standardW / 3);
+
+                    }
+                }
+
+                //local lag reduction
+                var temp = null;
+                for (var i = 0; i < toDraw.length; i++) {
+                    if (toDraw[i].name == name) {
+                        temp = i;
+                        break;
+                    }
+                }
+                if (temp != null) {
+                    toDraw[temp] = {
+                        name: name,
+                        color: color,
+                        x: x,
+                        y: y
+                    };
+                } else {
+                    toDraw.push({
+                        name: name,
+                        color: color,
+                        x: x,
+                        y: y
+                    });
+                }
+
+                socket.emit('move', room, name, color, x + (standardW / 1000) * camX, y);
+                draw();
             }
-          }
-          if (key == "DOWN"){
-            
-          }
-          if (key == "LEFT"){
-            if (vX > -speed){
-              vX -= speed/10;
+
+            var keyState = {};
+            setInterval(keyLoop, 10);
+            window.document.addEventListener('keydown', function(e) {
+                keyState[e.keyCode || e.which] = true;
+            }, true);
+            window.document.addEventListener('keyup', function(e) {
+                keyState[e.keyCode || e.which] = false;
+            }, true);
+
+            function keyLoop() {
+                if (keyState[37]) {
+                    move("LEFT");
+                }
+                if (keyState[38]) {
+                    move("UP");
+                }
+                if (keyState[39]) {
+                    move("RIGHT");
+                }
+                if (keyState[40]) {
+                    move("DOWN");
+                }
             }
-          }
-        }
-        
-        function movement(room){
-          var cMap, cMapL, cMapR, cMapLM, cMapRM;
-          ctx.drawImage(lobbyMapC,camX,camY,1000,750,0,0,canvas.width,canvas.height);
-          x += vX;
-          y += vY;
-          vX *= .90;
-          
-          if (vY <= 15){
-            vY += 1.1;
-          }
-          
-          //gravity
-          
-          cMapL = ctx.getImageData(scaleX(x), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
-          cMapR = ctx.getImageData(scaleX(x) + scaleX(pW), scaleY(y) + scaleY(pH) + 1, 1, 1).data;
-		  cMapLM = ctx.getImageData(scaleX(x) - 1, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
-          cMapRM = ctx.getImageData(scaleX(x) + scaleX(pW) + 1, scaleY(y) + scaleY((pH/3)*2) + 1, 1, 1).data;
-		  
-          if (("#000000" == rgbToHex(cMapL[0],cMapL[1],cMapL[2]) && vY >= 0) || ("#000000" == rgbToHex(cMapR[0],cMapR[1],cMapR[2]) && vY >= 0)){
-            vY = 0;
-            var count = 0;
-			jumping = true;
-            while (jumping && count < 40){
-              cMap = ctx.getImageData(scaleX(x) + scaleX(pW/2), scaleY(y) + scaleY(pH) - count, 1, 1).data;
-              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-				count += 1;
-              } else {
-				jumping = false;
-                y -= count/1.5; 
-			  }
+
+            //utilities
+            function scaleX(num) {
+                return canvas.width / (standardW / num);
             }
-          }
-          
-          //walls
-		  if ("#000000" == rgbToHex(cMapLM[0],cMapLM[1],cMapLM[2])){
-            vX = 0;
-            var count = 0;
-			var colliding = true;
-            while (colliding && count < 20){
-              cMap = ctx.getImageData(scaleX(x) + count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
-              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-				count += 1;
-              } else {
-				colliding = false;
-                x += count/2; 
-			  }
+
+            function scaleY(num) {
+                return canvas.height / (standardH / num);
             }
-          }
+
+            function scaleXNum(num, numScale) {
+                return numScale / (standardW / num);
+            }
+
+            function scaleYNum(num, numScale) {
+                return numScale / (standardH / num);
+            }
+
+            function rgbToHex(red, green, blue) {
+                var rgb = blue | (green << 8) | (red << 16);
+                return '#' + (0x1000000 + rgb).toString(16).slice(1);
+            }
 			
-		  if ("#000000" == rgbToHex(cMapRM[0],cMapRM[1],cMapRM[2])){
-            vX = 0;
-            var count = 0;
-			var colliding = true;
-            while (colliding && count < 20){
-              cMap = ctx.getImageData(scaleX(x) + scaleX(pW) - count, scaleY(y) + scaleY((pH/3)*2), 1, 1).data;
-              if ("#000000" == rgbToHex(cMap[0],cMap[1],cMap[2])){
-				count += 1;
-              } else {
-				colliding = false;
-                x -= count/2;
-			  }
-            }
-          }
-		  
-          if (x+pW > 806){
-            x = 806-pW;
-          }
-          if (x < 0){
-            x = 0;
-          }
-          //side scrolling
-          if (room == 'lobby'){
-            if (x+pW > 2*(standardW/3) && camX <= 1000){
-              camX += scaleXNum((x+pW)-(2*(standardW/3)),1000);
-              x = 2*(standardW/3)-pW;
-            }
-            if (x < 1*(standardW/3) && camX >= 0){
-              camX -= scaleXNum(1*(standardW/3)-x,1000);
-              x = (standardW/3);
-              
-            }
-          }
-        
-        
-          //local lag reduction
-          var temp = null;
-          for (var i = 0; i < toDraw.length; i++){
-            if (toDraw[i].name == name){
-              temp = i;
-              break;
-            }
-          }
-          if (temp != null){
-            toDraw[temp] = {name:name, color:color, x:x, y:y};
-          } else {
-            toDraw.push({name:name, color:color, x:x, y:y});
-          }
-          
-          
-          socket.emit('move', room, name, color, x + (standardW/1000)*camX, y);
-          draw();
-        }
-        
-      var keyState = {};  
-      setInterval(keyLoop, 10);
-      window.document.addEventListener('keydown',function(e){
-        keyState[e.keyCode || e.which] = true;
-      },true);    
-      window.document.addEventListener('keyup',function(e){
-        keyState[e.keyCode || e.which] = false;
-      },true);
-      
-      function keyLoop() {
-        if (keyState[37]){
-          move("LEFT");
-        } 
-        if (keyState[38]){
-          move("UP");
-        } 
-        if (keyState[39]){
-          move("RIGHT");
-        }
-        if (keyState[40]){
-          move("DOWN");
-        } 
-      }  
-        
-      //utilities
-      function scaleX(num){
-        return canvas.width/(standardW/num);
-      }
-        
-      function scaleY(num){
-        return canvas.height/(standardH/num);
-      }
-        
-      function scaleXNum(num, numScale){
-        return numScale/(standardW/num);
-      }
-      
-      function scaleYNum(num, numScale){
-        return numScale/(standardH/num);
-      }
-        
-      function rgbToHex(red, green, blue) {
-        var rgb = blue | (green << 8) | (red << 16);
-        return '#' + (0x1000000 + rgb).toString(16).slice(1);
-      }
-        
-      });
+			function loadCollisions(map,mapImage){
+				for (var g = 1; g <= 2; g++) {
+                    ctx.drawImage(mapImage, 0, 0, g * 1000, 750, 0, 0, canvas.width, canvas.height);
+                    for (var i = 0; i < g * 1000; i++) {
+                        map[i] = new Array(750);
+                        for (var j = 0; j < 750; j++) {
+                            if (ctx.getImageData(scaleXNum(i, 1000), scaleXNum(j, 1000), 1, 1).data == "#000000") {
+                                map[i][j] = 1;
+                            } else {
+                                map[i][j] = 0;
+                            }
+                        }
+                    }
+                }
+				console.log("finished loading");
+			}
+			
+			function checkCollision(map,x,y,nX,nY){
+				this.x = (1000/standardW)*this.x;
+				this.nX = (1000/standardW)*this.nX;
+				this.y = (750/standardH)*this.y;
+				this.nY = (750/standardH)*this.nY;
+				
+				if (this.x + this.nX == this.x){
+					//up
+					/*
+					if (this.y - this.vY > 0){
+						for (var i = this.y; i <= this.vY; i--){
+							if (map[this.x][i] == 1){
+								return scaleYNum(i + this.vY,1000);
+							}
+						}
+						return this.y;
+					}*/
+					//down
+					if (this.y - this.vY < 0){
+						for (var i = this.y; i <= this.vY; i++){
+							if (map[this.x][i] == 1){
+								jumping = false;
+								return scaleYNum(i,750) - vY;
+							}
+						}
+						return this.y;
+					}
+				}
+				else if (this.y + this.nY == this.y) {
+					//left
+					if (this.x - this.vX > 0){
+						for (var i = this.x; i <= this.vX; i--){
+							if (map[i][this.y] == 1){
+								return scaleYNum(i,1000) + vX;
+							}
+						}
+						return this.x;
+					}
+					//right
+					if (this.x - this.vX < 0){
+						for (var i = this.x; i <= this.vX; i++){
+							if (map[i][this.y] == 1){
+								return scaleYNum(i,1000) - vX;
+							}
+						}
+						return this.x;
+					}
+				}
+			}
+
+        });
     </script>
-  </body>
+</body>
+
 </html>
