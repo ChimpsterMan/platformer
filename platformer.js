@@ -40,6 +40,7 @@ io.on('connection', function(socket){
   
   socket.on('move', function(room, name, color, x, y){
     io.sockets.in(room).emit('newMove', name, color, x, y);
+	  console.log("heyo");
   });
   
   socket.on('log', function(msg){

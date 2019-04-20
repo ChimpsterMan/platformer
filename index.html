@@ -134,9 +134,9 @@
                 }
             });
 
-            function draw(bg,mp,mpc) {
-                ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-                ctx.drawImage(mp, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
+            function draw(room) {
+                ctx.drawImage(room.background, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(room.map, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
                 for (var i = 0; i < toDraw.length; i++) {
                     var newX = toDraw[i].x;
                     ctx.fillStyle = toDraw[i].color;
@@ -306,9 +306,9 @@
                         y: y
                     });
                 }
-
-                socket.emit('move', room, name, color, x + (standardW / 1000) * camX, y);
-                draw(room.background,room.map,room.mapC);
+				
+                socket.emit('move', room.name, name, color, x + (standardW / 1000) * camX, y);
+                draw(room);
             }
 
             var keyState = {};
