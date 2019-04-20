@@ -38,43 +38,62 @@
         $(function() {
             var socket = io();
             var canvas = document.getElementById('game');
-            var background = new Image();
-            var lobbyMap = new Image;
-            var lobbyMapC = new Image();
-            var skin = new Image();
-            background.src = "/pics/BG.png";
-            lobbyMap.src = "/pics/map_001.png";
-            lobbyMapC.src = "/pics/map_001_hitboxes.png";
-            skin.src = "/pics/sans.png";
+			var skin = new Image();
+			skin.src = "/pics/sans.png";
             canvas.height = window.innerHeight;
             canvas.width = (window.innerHeight / 3) * 4;
-            var ctx = canvas.getContext("2d");
-            var standardH = 605,
-                standardW = 806;
-            var lobby, color, name, x, y, vX = 0,
-                vY = 0;
-            var speed = 10,
+			function Room(n,bg,mp,mpc,runner) {
+				this.name = n;
+				this.background = new Image();
+				this.map = new Image();
+            	this.mapC = new Image();
+				this.background.src = bg;
+				this.map.src = mp;
+				this.mapC.src = mpc;
+				//this.simpleCollisions = loadCollisions(this);
+				
+				this.activate = function(){
+					this.active = setInterval(runner,33);
+				}
+				
+				this.deactivate = function() {
+					clearInterval(this.active);
+				}
+			}
+            var lobby = new Room("lobby", "/pics/BG.png", "/pics/map_001.png", "/pics/map_001_hitboxes.png", function(){
+				movement(lobby);
+			});
+            var ctx = canvas.getContext("2d"),
+				standardH = 605,
+                standardW = 806,
+				color, 
+				name, 
+				x, 
+				y, 
+				vX = 0,
+                vY = 0,
+            	speed = 10,
                 pW = 50,
-                pH = 71;
-            var toDraw = [];
-            var jump, jumping = false;
-            var camX = 0,
-                camY = 0;
-            var lobbyC = new Array(2000);
-			var inGameMenu = false;
-			var health = 100;
+                pH = 71,
+            	toDraw = [],
+            	jump, 
+				jumping = false,
+            	camX = 0,
+                camY = 0,
+            	lobbyC = new Array(2000),
+				inGameMenu = false,
+				health = 100;
 			
             socket.on('connect', function() {
                 name = prompt('Please Enter a Username');
                 socket.emit('newconnection', name);
-                //loadCollisions(lobbyC,lobbyMapC);
             });
 
             socket.on('setup', function(c) {
                 color = c;
                 x = (standardW / 2) - (pW / 2);
                 y = ((standardH / 15) * 13) - (pH / 2);
-                lobby = setInterval(lobbySequence, 33);
+                lobby.activate();
             });
 
             socket.on('disconnection', function(user) {
@@ -115,13 +134,9 @@
                 }
             });
 
-            function lobbySequence() {
-                movement('lobby');
-            }
-
-            function draw() {
-                ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-                ctx.drawImage(lobbyMap, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
+            function draw(bg,mp,mpc) {
+                ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(mp, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
                 for (var i = 0; i < toDraw.length; i++) {
                     var newX = toDraw[i].x;
                     ctx.fillStyle = toDraw[i].color;
@@ -179,7 +194,7 @@
 
             function movement(room) {
                 var cMap, cMapL, cMapR, cMapLM, cMapRM;
-                ctx.drawImage(lobbyMapC, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(room.mapC, camX, camY, 1000, 750, 0, 0, canvas.width, canvas.height);
 				/*
 				y = checkCollision(lobbyC, x + pW/2, y + pH, x + pW/2, vY)-pH;
 				if (vX > 0){
@@ -187,8 +202,8 @@
 				} 
 				else if (vX < 0){
 					x = checkCollision(lobbyC, x, y + pH, vX, y + pH);
-				}*/
-				
+				}
+				*/
                 x += vX;
                 y += vY;
                 vX *= .90;
@@ -196,6 +211,8 @@
                 if (vY <= 15) {
                     vY += 1.1;
                 }
+				
+				//console.log(x+", "+y);
 				
                 //gravity
 				
@@ -257,17 +274,14 @@
                     x = 0;
                 }
                 //side scrolling
-                if (room == 'lobby') {
-                    if (x + pW > 2 * (standardW / 3) && camX <= 1000) {
+                    if (x + pW > 2 * (standardW / 3) && camX <= room.map.naturalWidth-1000) {
                         camX += scaleXNum((x + pW) - (2 * (standardW / 3)), 1000);
                         x = 2 * (standardW / 3) - pW;
                     }
                     if (x < 1 * (standardW / 3) && camX >= 0) {
                         camX -= scaleXNum(1 * (standardW / 3) - x, 1000);
                         x = (standardW / 3);
-
                     }
-                }
 
                 //local lag reduction
                 var temp = null;
@@ -294,7 +308,7 @@
                 }
 
                 socket.emit('move', room, name, color, x + (standardW / 1000) * camX, y);
-                draw();
+                draw(room.background,room.map,room.mapC);
             }
 
             var keyState = {};
@@ -346,14 +360,16 @@
                 return '#' + (0x1000000 + rgb).toString(16).slice(1);
             }
 			
-			function loadCollisions(map,mapImage){
-				for (var g = 1; g <= 2; g++) {
-                    ctx.drawImage(mapImage, 0, 0, g * 1000, 750, 0, 0, canvas.width, canvas.height);
-                    for (var i = 0; i < g * 1000; i++) {
+			function loadCollisions(room){
+				var map = [];
+				for (var g = 0; g < 2; g++) {
+                    ctx.drawImage(room.mapC, g*1000, 0, 1000, 750, 0, 0, canvas.width, canvas.height);
+                    for (var i = 0; i < (g+1) * 1000; i++) {
                         map[i] = new Array(750);
                         for (var j = 0; j < 750; j++) {
-                            if (ctx.getImageData(scaleXNum(i, 1000), scaleXNum(j, 1000), 1, 1).data == "#000000") {
+                            if (ctx.getImageData(i, j, 1, 1).data == "#000000") {
                                 map[i][j] = 1;
+								console.log("ehhh");
                             } else {
                                 map[i][j] = 0;
                             }
@@ -361,11 +377,12 @@
                     }
                 }
 				console.log("finished loading");
+				return map;
 			}
 			
 			function checkCollision(map,x,y,nX,nY){
-				this.x = (1000/standardW)*this.x;
-				this.nX = (1000/standardW)*this.nX;
+				this.x = (1000/standardW)*this.x + camX;
+				this.nX = (1000/standardW)*this.nX + camX;
 				this.y = (750/standardH)*this.y;
 				this.nY = (750/standardH)*this.nY;
 				
@@ -395,7 +412,7 @@
 					//left
 					if (this.x - this.vX > 0){
 						for (var i = this.x; i <= this.vX; i--){
-							if (map[i][this.y] == 1){
+							if (map[i + camX][this.y] == 1){
 								return scaleYNum(i,1000) + vX;
 							}
 						}
@@ -404,7 +421,7 @@
 					//right
 					if (this.x - this.vX < 0){
 						for (var i = this.x; i <= this.vX; i++){
-							if (map[i][this.y] == 1){
+							if (map[i + camX][this.y] == 1){
 								return scaleYNum(i,1000) - vX;
 							}
 						}
